@@ -1,0 +1,1 @@
+# plugins-hide-categories-products-woocommerce
