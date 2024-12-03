@@ -3,9 +3,9 @@ Contributors: bastho, leroysabrina, agencenous, enzomangiante
 Donate link: https://apps.avecnous.eu/produit/masquer-les-categories-et-produits-pour-woocommerce/?mtm_campaign=wp-plugin&mtm_kwd=hide-categories-products-wc&mtm_medium=wp-repo&mtm_source=donate  
 Tags: woocommerce, categories, product, hide, storefront  
 Requires at least: 4.9.7  
-Tested up to: 6.4  
+Tested up to: 6.7  
 Author URI: https://apps.avecnous.eu/?mtm_campaign=wp-plugin&mtm_kwd=hide-categories-products-wc&mtm_medium=wp-repo&mtm_source=author  
-Stable tag: 1.2.9 
+Stable tag: 1.2.10  
 Requires PHP: 7.4  
 License: GPLv2 or later  
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,6 +38,9 @@ It is compatible with Storefront (theme) shortcodes.
 
 ## Frequently Asked Questions
 
+### How can I report security bugs?
+You can report security bugs through the Patchstack Vulnerability Disclosure Program. The Patchstack team help validate, triage and handle any security vulnerabilities. [Report a security vulnerability.](https://patchstack.com/database/wordpress/plugin/hide-categories-products-woocommerce/vdp)
+
 ### Will hidding a category hide the products from that category on the store ?
 
 Nope, this is why there is twice the categories list.
@@ -54,6 +57,11 @@ However, it is worth to note that, if your guests click on said category they wi
 1. A look at the setting page
 
 ## Changelog
+
+### 1.2.10
+
+- Add security report instruction in FAQ
+- Add Woocommerce as required plugin
 
 ### 1.2.9
 
