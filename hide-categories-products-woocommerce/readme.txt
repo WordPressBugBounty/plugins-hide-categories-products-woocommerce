@@ -3,9 +3,9 @@ Contributors: bastho, leroysabrina, agencenous, enzomangiante
 Donate link: https://apps.avecnous.eu/produit/masquer-les-categories-et-produits-pour-woocommerce/?mtm_campaign=wp-plugin&mtm_kwd=hide-categories-products-wc&mtm_medium=wp-repo&mtm_source=donate  
 Tags: woocommerce, categories, product, hide, storefront  
 Requires at least: 4.9.7  
-Tested up to: 6.7  
+Tested up to: 7.0  
 Author URI: https://apps.avecnous.eu/?mtm_campaign=wp-plugin&mtm_kwd=hide-categories-products-wc&mtm_medium=wp-repo&mtm_source=author  
-Stable tag: 1.2.10  
+Stable tag: 1.3.0  
 Requires PHP: 7.4  
 License: GPLv2 or later  
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -58,6 +58,12 @@ However, it is worth to note that, if your guests click on said category they wi
 
 ## Changelog
 
+### 1.3.0
+
+- Alter posts_clauses, make it work in WC product collections
+- Show shown/hidden status in admin table
+- Reliability: Use ids instead of slugs for products
+
 ### 1.2.10
 
 - Add security report instruction in FAQ
@@ -105,3 +111,10 @@ However, it is worth to note that, if your guests click on said category they wi
 
 - Fix translation
 - Improve presentation in backoffice
+
+
+## Upgrade notice
+
+### 1.3.0
+
+For reliability, storage of "hide from categories" moves from slug to id. You'll need to set hidden products after upgrade.

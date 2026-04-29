@@ -3,7 +3,7 @@
  * Plugin Name: Hide Categories and Products for Woocommerce
  * Description: Plugin to hide categories and hide products from categories
  * Author: N.O.U.S. Open Useful and Simple
- * Version: 1.2.10
+ * Version: 1.3.0
  * Author URI: https://apps.avecnous.eu/?mtm_campaign=wp-plugin&mtm_kwd=hide-categories-products-wc&mtm_medium=dashboard&mtm_source=author  
  * License: GPLv2
  * Text Domain: hide-categories-products-woocommerce
@@ -49,6 +49,7 @@ class Hide_Categories_Products_WC{
     function register_hooks(){
         // hide products
         add_action( 'woocommerce_product_query', array($this, 'custom_pre_get_posts_query') );
+		add_filter( 'posts_clauses', array( $this, 'posts_clauses' ), 10, 2 );
 
         // hide categories
         add_filter( 'get_terms_args', array($this, 'term_filter') );
@@ -73,6 +74,11 @@ class Hide_Categories_Products_WC{
         // customize settings
         add_action( 'woocommerce_before_settings_products' ,  array( $this, 'woocommerce_before_settings_products' ));
         add_action( 'woocommerce_after_settings_products' ,  array( $this, 'woocommerce_after_settings_products' ));
+
+        // admin taxonomy table
+        add_filter( 'manage_edit-product_cat_columns', array( $this, 'manage_product_cat_columns' ) );
+        add_filter( 'manage_product_cat_custom_column', array( $this, 'manage_product_cat_custom_column' ), 10, 3 );
+        add_action( 'admin_post_wc_hide_categories_toggle', array( $this, 'handle_toggle_action' ) );
     }
 
     /**
@@ -88,10 +94,11 @@ class Hide_Categories_Products_WC{
         if($categories_setting){
             foreach($categories_setting as $cat=>$value){
                 if($value == 'yes' || $value == '1'){
-                    if(false != $term = get_term_by('slug', $cat, 'product_cat') ){
-                        $cats[] = $term->term_id;
-                    } else {
-                        error_log( 'hide-categories-and-products-for-woocommerce: term not found: '.$cat );
+                    if(is_numeric($cat)){
+                        $cats[] = intval($cat);
+                    }
+                    else {
+                        error_log( 'hide-categories-and-products-for-woocommerce: term not found: '.$cat ); // phpcs:ignore
                     }
                 }
             }
@@ -133,6 +140,105 @@ class Hide_Categories_Products_WC{
     }
 
     /**
+    * Add visibility status column to the product category list table
+    * @param  array $columns Existing taxonomy columns
+    * @return array
+    */
+    function manage_product_cat_columns( $columns ) {
+        $new_columns = array();
+
+        foreach ( $columns as $key => $label ) {
+            $new_columns[ $key ] = $label;
+
+            if ( 'name' === $key ) {
+                $new_columns['wchc_visibility'] = __( 'Visibility', 'hide-categories-products-woocommerce' );
+                $new_columns['wchc_product_visibility'] = __( 'Products', 'hide-categories-products-woocommerce' );
+            }
+        }
+
+        if ( ! isset( $new_columns['wchc_visibility'] ) ) {
+            $new_columns['wchc_visibility'] = __( 'Visibility', 'hide-categories-products-woocommerce' );
+            $new_columns['wchc_product_visibility'] = __( 'Products', 'hide-categories-products-woocommerce' );
+        }
+
+        return $new_columns;
+    }
+
+    /**
+    * Render visibility status in the product category list table
+    * @param  string $content Current column content
+    * @param  string $column_name Column key
+    * @param  int    $term_id Term identifier
+    * @return string
+    */
+    function manage_product_cat_custom_column( $content, $column_name, $term_id ) {
+        if ( 'wchc_visibility' === $column_name ) {
+            $hidden_cats = $this->get_hidden_cats();
+
+            $action_params = [
+                'action' => 'wc_hide_categories_toggle',
+                'term_id' => $term_id,
+                'action_target' =>'term',
+                'action_type' =>'hide',
+            ];
+    
+            if ( in_array( $term_id, $hidden_cats, true ) ) {
+                $action_params['action_type'] = 'show';
+                $action_url = add_query_arg( $action_params, admin_url( 'admin-post.php' ) );
+                $action_url = wp_nonce_url( $action_url, 'wc_hide_categories_toggle_'.$term_id );
+                return  '<a href="' . esc_url( $action_url ) . '"><span class="dashicons-before dashicons-hidden"></span><span class="screen-reader-text">'.esc_html__( 'Hidden', 'hide-categories-products-woocommerce' ).'</span></a>';
+            }
+    
+            $action_url = add_query_arg( $action_params, admin_url( 'admin-post.php' ) );
+            $action_url = wp_nonce_url( $action_url, 'wc_hide_categories_toggle_'.$term_id );
+            return '<a href="' . esc_url( $action_url ) . '"><span class="dashicons-before dashicons-visibility"></span><span class="screen-reader-text">'.esc_html__( 'Shown', 'hide-categories-products-woocommerce' ).'</span></a>';
+        }
+        if ( 'wchc_product_visibility' === $column_name ) {
+            $hidden_from_cats = $this->get_exluded_cats();
+
+            $action_params = [
+                'action' => 'wc_hide_categories_toggle',
+                'term_id' => $term_id,
+                'action_target' =>'products',
+                'action_type' =>'hide',
+            ];
+    
+            if ( in_array( $term_id, $hidden_from_cats, true ) ) {
+                $action_params['action_type'] = 'show';
+                $action_url = add_query_arg( $action_params, admin_url( 'admin-post.php' ) );
+                $action_url = wp_nonce_url( $action_url, 'wc_hide_categories_toggle_'.$term_id );
+                return  '<a href="' . esc_url( $action_url ) . '"><span class="dashicons-before dashicons-hidden"></span><span class="screen-reader-text">'.esc_html__( 'Hidden', 'hide-categories-products-woocommerce' ).'</span></a>';
+            }
+    
+            $action_url = add_query_arg( $action_params, admin_url( 'admin-post.php' ) );
+            $action_url = wp_nonce_url( $action_url, 'wc_hide_categories_toggle_'.$term_id );
+            return '<a href="' . esc_url( $action_url ) . '"><span class="dashicons-before dashicons-visibility"></span><span class="screen-reader-text">'.esc_html__( 'Shown', 'hide-categories-products-woocommerce' ).'</span></a>';
+        }
+            
+        return $content;
+    }
+
+    function handle_toggle_action(){
+        // Check nonce
+        if ( ! isset( $_GET['term_id'], $_GET['action_type'] ) || ! in_array( $_GET['action_type'], ['hide', 'show'], true ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'wc_hide_categories_toggle_'.$_GET['term_id'] ) ) {
+            wp_die( esc_html__( 'Invalid request.', 'hide-categories-products-woocommerce' ), esc_html__( 'Error', 'hide-categories-products-woocommerce' ), [ 'response' => 400 ] );
+        }
+
+        $term_id = intval( $_GET['term_id'] );
+        $action_type = $_GET['action_type'] ?? 'hide';
+        $action_target = isset($_GET['action_target']) && in_array( $_GET['action_target'], ['term', 'products'], true ) ? $_GET['action_target'] : 'term';
+        $option_name = $action_target === 'term' ? 'wchc_hide_product_cats' : 'wchc_hide_products_from_cat';
+        $option = get_option( $option_name, [] );
+        // print_r($option);
+        
+        $option[ $term_id ] = $action_type === 'hide' ? 'yes' : 'no';
+        update_option( $option_name, $option );
+
+        $redirect_url = wp_get_referer() ? wp_get_referer() : admin_url( 'edit-tags.php?taxonomy=product_cat' );
+        wp_safe_redirect( $redirect_url );
+    }
+
+    /**
     * Exclude hidden products on storefront shortcode
     * @param  array $params shortcode parameters
     * @return array         shortcode parameters
@@ -170,6 +276,29 @@ class Hide_Categories_Products_WC{
         );
         $q->set( 'tax_query', $tax_query );
         return $q;
+    }
+
+    function posts_clauses( $clauses, $query ) {
+        $query_vars                  = $query->query_vars;
+        if ( is_admin() ) {
+            return $clauses;
+        }
+        if($query_vars['post_type'] != 'product'){
+            return $clauses;
+        }
+
+        $excluded_cats = $this->get_exluded_cats(true);
+
+        if (!empty($excluded_cats)){
+            global $wpdb;
+            $clauses['where'] .= " AND (
+    $wpdb->posts.ID NOT IN (
+				SELECT object_id
+				FROM $wpdb->term_relationships
+				WHERE term_taxonomy_id IN (".implode(",",$excluded_cats).")
+			)) ";
+        }
+        return $clauses;
     }
 
     /**
@@ -259,7 +388,7 @@ class Hide_Categories_Products_WC{
             foreach ($terms as $term) {
                 $settings[] = array(
                     'title'   => $term->name,
-                    'id'      => 'wchc_hide_products_from_cat['.$term->slug.']',
+                    'id'      => 'wchc_hide_products_from_cat['.$term->term_id.']',
                     'type'    => 'checkbox',
                     'default' => '',
                 );
