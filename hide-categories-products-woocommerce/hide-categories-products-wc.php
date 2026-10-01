@@ -3,7 +3,7 @@
  * Plugin Name: Hide Categories and Products for Woocommerce
  * Description: Plugin to hide categories and hide products from categories
  * Author: N.O.U.S. Open Useful and Simple
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author URI: https://apps.avecnous.eu/?mtm_campaign=wp-plugin&mtm_kwd=hide-categories-products-wc&mtm_medium=dashboard&mtm_source=author  
  * License: GPLv2
  * Text Domain: hide-categories-products-woocommerce
